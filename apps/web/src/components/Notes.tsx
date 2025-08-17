@@ -25,7 +25,12 @@ const Notes: React.FC<Props> = ({ user }) => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setNotes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Note)));
+      setNotes(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Note[]
+      );
     });
 
     return () => unsubscribe();
@@ -34,23 +39,29 @@ const Notes: React.FC<Props> = ({ user }) => {
   const addNote = async () => {
     if (!text || !user?.uid) return;
 
-    await addDoc(collection(db, "users", user.uid, "notes"), {
-      text,
-      createdAt: Timestamp.now()
-    });
-
-    setText("");
+    try {
+      await addDoc(collection(db, "users", user.uid, "notes"), {
+        text,
+        createdAt: Timestamp.now(),
+      });
+      setText("");
+    } catch (error) {
+      console.error("Error adding note:", error);
+    }
   };
 
   return (
     <div>
       <h3>Your Notes</h3>
       <input
+        type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Write a note..."
       />
-      <button type="button" onClick={addNote}>Save</button>
+      <button type="button" onClick={addNote}>
+        Save
+      </button>
       <ul>
         {notes.map((n) => (
           <li key={n.id}>{n.text}</li>
